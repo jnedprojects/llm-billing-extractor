@@ -5,7 +5,14 @@ type Invoice = {
   invoiceNumber: string
   invoiceDate: string
   vendorName: string
-  totalAmount: number
+
+  grossTotal: number
+  discountAmount: number
+  deliveryFee: number
+  taxableAmount: number
+  stateSalesTax: number
+  netTotalDue: number
+
   lineItems: {
     description: string
     quantity: number
@@ -19,6 +26,8 @@ type Validation = {
   amountMismatch: boolean
   recalculationMismatch: boolean
   warnings: string[]
+  lineItemErrors: string[]
+  calculationErrors: string[]
 }
 
 function App() {
@@ -77,7 +86,6 @@ function App() {
           <p><strong>Vendor:</strong> {invoice.vendorName}</p>
           <p><strong>Invoice #:</strong> {invoice.invoiceNumber}</p>
           <p><strong>Date:</strong> {invoice.invoiceDate}</p>
-          <p><strong>Total:</strong> ${invoice.totalAmount}</p>
 
           <h3>Line Items</h3>
 
@@ -88,17 +96,62 @@ function App() {
                 <th>Qty</th>
                 <th>Unit Price</th>
                 <th>Line Total</th>
+                <th>Status</th>
               </tr>
             </thead>
             <tbody>
-              {invoice.lineItems.map((item, index) => (
-                <tr key={index}>
-                  <td>{item.description}</td>
-                  <td>{item.quantity}</td>
-                  <td>${item.unitPrice}</td>
-                  <td>${item.lineTotal}</td>
-                </tr>
-              ))}
+              {invoice.lineItems.map((item, index) => {
+                const isWrong = validation?.lineItemErrors?.includes(item.description)
+
+                return (
+                  <tr key={index}>
+                    <td>{item.description}</td>
+                    <td>{item.quantity}</td>
+                    <td>${item.unitPrice}</td>
+                    <td>${item.lineTotal}</td>
+                    <td style={{ color: "red", fontWeight: "bold" }}>
+                      {isWrong ? "❌" : "✅"}
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+
+          <h3 style={{ marginTop: 30 }}>Financial Summary</h3>
+
+          <table border={1} cellPadding={8}>
+            <tbody>
+              <tr>
+                <td>Gross Total</td>
+                <td>${invoice.grossTotal}</td>
+                <td>{validation?.calculationErrors.includes("grossTotal") ? "❌" : "✅"}</td>
+              </tr>
+              <tr>
+                <td>Discount (5%)</td>
+                <td>${invoice.discountAmount}</td>
+                <td>{validation?.calculationErrors.includes("discountAmount") ? "❌" : "✅"}</td>
+              </tr>
+              <tr>
+                <td>Delivery Fee</td>
+                <td>${invoice.deliveryFee}</td>
+                <td>{validation?.calculationErrors.includes("deliveryFee") ? "❌" : "✅"}</td>
+              </tr>
+              <tr>
+                <td>Taxable Amount</td>
+                <td>${invoice.taxableAmount}</td>
+                <td>{validation?.calculationErrors.includes("taxableAmount") ? "❌" : "✅"}</td>
+              </tr>
+              <tr>
+                <td>State Sales Tax (6%)</td>
+                <td>${invoice.stateSalesTax}</td>
+                <td>{validation?.calculationErrors.includes("stateSalesTax") ? "❌" : "✅"}</td>
+              </tr>
+              <tr>
+                <td><strong>Net Total Due</strong></td>
+                <td><strong>${invoice.netTotalDue}</strong></td>
+                <td>{validation?.calculationErrors.includes("netTotalDue") ? "❌" : "✅"}</td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -106,13 +159,7 @@ function App() {
 
       {validation && (
         <div style={{ marginTop: 30 }}>
-          <h2>Validation</h2>
-
-          {validation.amountMismatch && (
-            <div style={{ color: "red" }}>
-              ⚠ Amount mismatch detected
-            </div>
-          )}
+          <h2>Validation Summary</h2>
 
           {validation.isDuplicate && (
             <div style={{ color: "orange" }}>
@@ -121,7 +168,9 @@ function App() {
           )}
 
           {validation.warnings.map((w, i) => (
-            <div key={i}>{w}</div>
+            <div key={i} style={{ color: "red" }}>
+              ❌ {w}
+            </div>
           ))}
         </div>
       )}

@@ -30,7 +30,15 @@ Return STRICT JSON:
   "invoiceNumber": string,
   "invoiceDate": string,
   "vendorName": string,
-  "totalAmount": number,
+
+  "grossTotal": number,
+  "discountPercent": number,
+  "discountAmount": number,
+  "deliveryFee": number,
+  "taxableAmount": number,
+  "stateSalesTax": number,
+  "netTotalDue": number,
+
   "lineItems": [
     {
       "description": string,
@@ -43,7 +51,12 @@ Return STRICT JSON:
 
 Rules:
 - Combine line items from all pages
-- Use NET TOTAL DUE from final page as totalAmount
+- GROSS TOTAL = sum of all line item lineTotal
+- Discount is 5% of GROSS TOTAL
+- Delivery fee is 150
+- TAXABLE AMOUNT = GROSS TOTAL - discount + delivery fee
+- State Sales Tax is 6% of TAXABLE AMOUNT
+- NET TOTAL DUE = TAXABLE AMOUNT + State Sales Tax
 - Return only JSON
 - No explanation
 `
