@@ -1,64 +1,46 @@
-import express from "express"
 import dotenv from "dotenv"
-import multer from "multer"
-import path from "path"
-import { validateInvoice } from "./validator"
-
 dotenv.config()
+import express from "express"
+import multer from "multer"
+import { extractInvoiceFromImages } from "./llmservice"
+import { validateInvoice } from "./validator"
+import cors from "cors"
 
 const app = express()
 const PORT = 3000
 
-// Middleware
-app.use(express.json())
-
-// Configure multer storage
 const upload = multer({
-    dest: path.join(__dirname, "../uploads"),
+    dest: "uploads/"
 })
 
-// Health check route
+app.use(cors())
+
 app.get("/", (req, res) => {
     res.send("Billing Extractor Backend Running")
 })
 
-// Upload endpoint
-app.post("/upload", upload.array("invoices"), async (req, res) => {
+app.post("/upload", upload.array("files", 10), async (req, res) => {
     try {
-        const files = req.files as Express.Multer.File[]
-
-        if (!files || files.length === 0) {
+        if (!req.files || req.files.length === 0) {
             return res.status(400).json({ error: "No files uploaded" })
         }
 
-        console.log("Uploaded files:", files.map(f => f.originalname))
+        const files = req.files as Express.Multer.File[]
 
-        // TEMPORARY MOCK (we replace this with Gemini next)
-        const mockInvoice = {
-            invoiceNumber: "INV-2025-8892",
-            invoiceDate: "2025-12-09",
-            vendorName: "FreshHarvest Wholesale Distributors",
-            totalAmount: 12219.33,
-            lineItems: [
-                {
-                    description: "Test Item",
-                    quantity: 1,
-                    unitPrice: 12219.33,
-                    lineTotal: 12219.33,
-                },
-            ],
-        }
+        const filePaths = files.map(file => file.path)
 
-        const validation = validateInvoice(mockInvoice)
+        const extractedInvoice = await extractInvoiceFromImages(filePaths)
+
+        const validationResult = validateInvoice(extractedInvoice)
 
         res.json({
-            invoice: mockInvoice,
-            validation,
+            invoice: extractedInvoice,
+            validation: validationResult
         })
 
     } catch (error) {
         console.error(error)
-        res.status(500).json({ error: "Internal server error" })
+        res.status(500).json({ error: "Extraction failed" })
     }
 })
 
