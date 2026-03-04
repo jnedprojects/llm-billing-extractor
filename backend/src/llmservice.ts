@@ -20,20 +20,27 @@ export async function extractInvoiceFromImages(imagePaths: string[]) {
     }))
 
     const prompt = `
-Act as a professional forensic accountant. Extract data from this multi-page invoice into JSON.
+### DIGIT DISAMBIGUATION & CONSISTENCY (CRITICAL)
+This font is condensed; 3/5 and 8/6 look nearly identical. Follow these forensic steps:
 
-### MULTI-PAGE CROSS-REFERENCE RULE:
-1. Locate the Invoice Number on EVERY page. 
-   - Page 1: Check top right.
-   - Subsequent Pages: Check the TOP LEFT.
-2. If the numbers appear different due to legibility, the version that matches the most pages or follows the "INV-202X-XXXX" pattern is correct.
+1. **The "White Space" Test (8 vs 6)**:
+   - An **8** MUST have a fully enclosed white "eye" in the top half.
+   - A **6** has a "hook" or "stem" that is open at the top. If the top-half loop is not 100% closed, it is a **6**.
+   - **Verification**: In the Payment Summary, compare the '6' in "$7,726.00" to the '8' in the Invoice Number.
 
-### DIGIT DISAMBIGUATION (3 vs 5, 8 vs 6):
-This is CRITICAL for Dates, Invoice Numbers, and Amounts:
-- **3 vs 5**: A '5' has a perfectly flat horizontal top bar. A '3' has a rounded/curved top.
-- **8 vs 6**: An '8' consists of TWO fully closed loops. A '6' has only ONE closed loop at the bottom and an open curve at the top.
-- **Year Check**: For years (e.g., 2025, 2026), ensure an '8' isn't being mistaken for a '6' or vice versa by checking the clarity of the top loop.
-- **Math-Check**: For all currency amounts, calculate (Quantity * Unit Price). If the result matches the Line Total using an '8' instead of a '6' (or 5 instead of 3), trust the math and use the digit that makes the equation true.
+2. **The "Corner" Test (3 vs 5)**:
+   - A **5** MUST have a sharp, flat horizontal top bar with a 90-degree corner on the left.
+   - A **3** is rounded or open at the top-left.
+   - **Reference**: Use the "5" in "5%" or "2025" as your visual legend for all other prices.
+
+3. **Arithmetic Validation (The Final Truth)**:
+   - **Line Items**: (Quantity * Unit Price) must equal Line Total.
+   - **Payment Summary**: (SUBTOTAL Page 1 + Page 2 + Page 3) MUST equal GROSS TOTAL.
+   - **Rule**: If the math fails by a difference that could be explained by a 3/5 or 8/6 swap (e.g., a difference of 2.00 or 20.00), you must re-examine the pixels.
+   - **Strict Swap Policy**: Only change a digit if the alternative shape is a visual match. If the pixels are clear but the math is wrong, extract the typo exactly as printed.
+
+4. **Negative Constraint**:
+   - NEVER turn a "5" into an "8" or a "0" into an "8" just to make math work if the pixel shapes do not support it.
 
 JSON STRUCTURE:
 {

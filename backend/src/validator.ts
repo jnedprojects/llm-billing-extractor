@@ -24,7 +24,7 @@ export function validateInvoice(invoice: InvoiceData): ValidationResult {
 
             if (Math.abs(expectedLineTotal - item.lineTotal) > 0.01) {
                 lineItemErrors.push(`${item.description} (Pg ${page.pageNumber})`)
-                warnings.push(`Math mismatch in ${item.description}: ${item.quantity} x ${item.unitPrice} != ${item.lineTotal}`)
+                warnings.push(`⚠️ Recalculation Error: ${item.description} (Pg ${page.pageNumber}). Extracted Unit Price: ${item.unitPrice}, Qty: ${item.quantity}, but Total: ${item.lineTotal}. Validated data suggests ${expectedLineTotal}.`);
             }
             pageCalculatedSum += item.lineTotal
         })
