@@ -1,38 +1,31 @@
-export interface LineItem {
+
+type LineItem = {
     description: string
     quantity: number
     unitPrice: number
     lineTotal: number
 }
 
-export interface InvoicePage {
+type InvoicePage = {
     pageNumber: number
     pageSubtotal: number
     lineItems: LineItem[]
 }
 
-export interface InvoiceData {
+export type Invoice = {
     invoiceNumber: string
     invoiceDate: string
     vendorName: string
-
-    pages: InvoicePage[]
-
-    subtotalPage1: number
-    subtotalpage2: number
-    subtotalPage3: number
     grossTotal: number
-    discountPercent: number
     discountAmount: number
     deliveryFee: number
     taxableAmount: number
     stateSalesTax: number
     netTotalDue: number
-
-    lineItems: LineItem[]
+    pages: InvoicePage[]
 }
 
-export interface ValidationResult {
+export type Validation = {
     isDuplicate: boolean
     amountMismatch: boolean
     recalculationMismatch: boolean
