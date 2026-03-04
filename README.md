@@ -20,11 +20,24 @@ Code snippet: GEMINI_API_KEY=your_api_key_here
 (Note: Ensure your llmservice.ts is configured to read the correct environment variable prefix based on your build tool).
 
 3. Build & Run 
+
 Install dependencies
-npm install
+
+npm install - this has to be done in the directories below:
+
+/billing-extractor
+
+/billing-extractor/backend
+
+/billing-extractor/frontend
 
 # Start development server
+
+Nvaigate back to /billing-extractor and type in terminal the command below:
+
 npm run dev
+
+Both backend should build and be served.
 
 # Highlights 
 
