@@ -1,78 +1,311 @@
-# A LLM powered invoice extraction & validation project.
+# LLM Powered AI Invoice Extractor
 
-A high-precision, full-stack solution designed to automate the extraction of structured data from multi-page invoices. 
-This project leverages Gemini 2.5 Flash with a specialized Forensic Accounting Prompt to solve common OCR failures in condensed fonts (such as 3/5 and 8/6 confusion).
+A high-precision, full-stack solution designed to automate the extraction of structured data from multi-page invoices.
 
+This project leverages **Gemini 2.5 Flash** with a specialized **Forensic Accounting Prompt** to solve common OCR failures in condensed fonts (such as **3/5** and **8/6** confusion). The system focuses on improving numeric extraction accuracy in financial documents where small typographic differences can cause major accounting discrepancies.
 
-Getting Started
+The platform processes invoice images, extracts structured financial data using AI, validates totals, detects duplicates, and stores results in a normalized database.
 
-1. Prerequisites:
-   
-Node.js: v18.0.0 or higher
+---
 
-Package Manager: npm, yarn, or pnpm
+## Getting Started
 
-Gemini API Key: Obtain a free key from Google AI Studio
+### Prerequisites
 
-2. Configuration
-Create a .env file in the project root:
-Code snippet: GEMINI_API_KEY=your_api_key_here
-(Note: Ensure your llmservice.ts is configured to read the correct environment variable prefix based on your build tool).
+Before running this project, ensure the following are installed:
 
-3. Build & Run 
+| Requirement     | Version                      |
+| --------------- | ---------------------------- |
+| Node.js         | v18.0.0 or higher            |
+| Package Manager | npm, yarn, or pnpm           |
+| Gemini API Key  | Obtain from Google AI Studio |
 
-Install dependencies
+---
 
-npm install - this has to be done in the directories below:
+## Features
 
-/billing-extractor
+* AI-powered invoice data extraction
+* Multi-page invoice support
+* Optimized prompt engineering for financial documents
+* Numeric disambiguation for condensed invoice fonts
+* Automatic financial validation checks
+* Duplicate invoice detection
+* Structured database storage
+* Line-item extraction and normalization
 
-/billing-extractor/backend
+---
 
-/billing-extractor/frontend
+## Architecture
 
-# Start development server
+Processing pipeline:
 
-Nvaigate back to /billing-extractor and type in terminal the command below:
+User Upload
+> 
+Image Processing API
+> 
+Gemini Vision Extraction
+> 
+JSON Repair
+> 
+Invoice Validation
+> 
+Duplicate Detection
+> 
+Database Storage
+> 
+Structured API Response
 
+---
+
+## Tech Stack
+
+| Component       | Technology        |
+| --------------- | ----------------- |
+| Backend         | Node.js + Express |
+| Language        | TypeScript        |
+| AI Model        | Gemini Vision     |
+| Database        | SQLite            |
+| Upload Handling | Multer            |
+| JSON Recovery   | jsonrepair        |
+
+---
+
+## Installation
+
+Clone the repository:
+
+```bash
+git clone https://github.com/jnedprojects/llm-billing-extractor.git
+```
+
+Navigate to the backend folder:
+
+```bash
+cd billing-extractor/backend
+```
+
+Install dependencies:
+
+```bash
+npm install
+npm install @google/generative-ai 
+```
+
+Create a `.env` file in the backend folder.
+This is where your API key will be stored. Add it into the file following the format below:
+
+```
+GEMINI_API_KEY=your_api_key_here
+```
+
+Navigate to the frontend folder:
+
+```bash
+cd billing-extractor/frontend
+```
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Navigate back to the root folder:
+
+```bash
+cd billing-extractor
+```
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Start the development server. Make sure you are in the root folder /billing-extractor.
+Run the command below. Both the backend and frontend should build.
+
+```bash
 npm run dev
+```
 
-Both backend should build and be served.
+After the project is built succesfully, you will notice a file labeled invoice.db added to your backend directory. This is where your data is stored for duplication checks and saving the extracted invoices.
 
-# Highlights 
+Server will run at ports as below based on default configurations.
 
-Specialized OCR Disambiguation
+Backend:
+```
+http://localhost:3000 
+```
 
-To achieve high accuracy on condensed industrial fonts, the llmservice.ts implements a Visual Legend Protocol:
+Frontend:
+```
+http://localhost:5173 
+```
 
-Comparative Anchoring: The model establishes a "baseline" for digits by locating clear examples (e.g., the "5" in a 5% discount) before interpreting blurry price fields.
+---
 
-Geometric Validation: Instead of relying on probability, the prompt forces the AI to check for Negative Space (the "eye" of an 8 vs. the "hook" of a 6) and Angular Sharpness (the 90-degree corner of a 5 vs. the curve of a 3).
+## API Usage
 
-"Nudge" Math Logic: The system uses (Quantity * Unit Price) as a trigger to re-examine pixels, but strictly forbids "hallucinating" numbers to fit the math if the visual evidence is contrary.
+### Upload Invoice
 
-Multi-Tier Validation Engine: The validator.ts provides a complete financial audit of the extracted JSON
+Endpoint:
 
-Hierarchical Summation: Validates that line items equal page subtotals, and page subtotals equal the Gross Total.
+```
+POST /upload
+```
 
-Tax & Discount Audit: Re-calculates 5% discounts and 6% state taxes to ensure the vendor's printed totals are logically consistent.
+Content type:
 
-Duplicate Prevention: Integrated with a local database service to flag invoices that have already been processed.
+```
+multipart/form-data
+```
 
-# File Purpose and Structure
+Field name:
 
-llmservice.ts - Gemini 2.5 Flash integration & Forensic Prompt Engineering.
+```
+files
+```
 
-validator.ts - Multi-page financial validation and rounding logic.
+Supported file types:
 
-database.ts - Local persistence and duplicate detection.
+* JPG
+* JPEG
+* PNG
 
-models.ts - TypeScript interfaces defining the strict Invoice schema.
+---
 
-# TroubleshootingExtraction Errors: 
+## Example Response
 
-Ensure images are high resolution. Low-DPI images may cause the "top-bar" of the digit 5 to disappear, making it look like a 3
+```json
+{
+    "invoice": {
+        "invoiceNumber": "MY-001",
+        "invoiceDate": "29/01/2019",
+        "vendorName": "East Asia Trading",
+        "lineItems": [
+            {
+                "description": "Wooden elephant figurine",
+                "quantity": 1,
+                "unitPrice": 600,
+                "lineTotal": 600
+            },
+            {
+                "description": "Large cloth rice bag",
+                "quantity": 2,
+                "unitPrice": 45,
+                "lineTotal": 90
+            },
+            {
+                "description": "Bamboo ladder",
+                "quantity": 3,
+                "unitPrice": 20,
+                "lineTotal": 60
+            }
+        ],
+        "totals": {
+            "subtotal": 750,
+            "tax": 45,
+            "discount": null,
+            "shipping": null,
+            "grossTotal": null,
+            "netTotalDue": 795
+        }
+    },
+    "validation": {
+        "isDuplicate": true,
+        "amountMismatch": false,
+        "recalculationMismatch": false,
+        "warnings": [
+            "DUPLICATE DETECTED: Invoice MY-001 from East Asia Trading already exists."
+        ],
+        "lineItemErrors": [],
+        "calculationErrors": []
+    }
+}
+```
 
-API Rate Limits: If using the Free Tier of Gemini, ensure you do not exceed the requests-per-minute quota.
+---
 
-During development, I identified that standard OCR often fails on condensed sans-serif fonts found on commercial invoices. By moving the "correction" logic into a two-step process—AI visual verification followed by Programmatic math validation—I created a system that is both accurate and resilient to "hallucinations."
+## Database Schema
+
+### invoices
+
+Stores invoice metadata.
+
+| Column        | Type    |
+| ------------- | ------- |
+| id            | INTEGER |
+| invoiceNumber | TEXT    |
+| vendorName    | TEXT    |
+| invoiceDate   | TEXT    |
+| subtotal      | REAL    |
+| tax           | REAL    |
+| discount      | REAL    |
+| shipping      | REAL    |
+| grossTotal    | REAL    |
+| netTotalDue   | REAL    |
+
+---
+
+### invoice_line_items
+
+Stores each line item belonging to an invoice.
+
+| Column      | Type    |
+| ----------- | ------- |
+| id          | INTEGER |
+| invoice_id  | INTEGER |
+| description | TEXT    |
+| quantity    | REAL    |
+| unitPrice   | REAL    |
+| lineTotal   | REAL    |
+
+Relationship:
+
+```
+invoices (1) → invoice_line_items (many)
+```
+
+---
+
+## Error Handling
+
+The system includes safeguards for common issues:
+
+* AI returning invalid JSON
+* Duplicate invoice submissions
+* Invalid file types
+* Failed extraction attempts
+
+AI responses are automatically repaired using a JSON repair layer before parsing.
+
+---
+
+## Future Improvements
+
+Potential enhancements:
+
+* PDF invoice support
+* OCR fallback for low-quality images
+* AI confidence scoring
+* Vendor-specific parsing rules
+* Processing audit logs
+* Frontend dashboard for uploaded invoices
+
+---
+
+## Security Notes
+
+The following files are ignored in version control:
+
+```
+node_modules
+.env
+uploads
+invoice.db
+```
+
+Sensitive credentials and runtime data should never be committed.
+
+---
