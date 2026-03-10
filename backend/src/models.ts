@@ -1,35 +1,27 @@
 export interface LineItem {
     description: string
-    quantity: number
-    unitPrice: number
-    lineTotal: number
+    quantity: number | null
+    unitPrice: number | null
+    lineTotal: number | null
 }
 
-export interface InvoicePage {
-    pageNumber: number
-    pageSubtotal: number
-    lineItems: LineItem[]
+export interface InvoiceTotals {
+    subtotal: number | null
+    tax: number | null
+    discount: number | null
+    shipping: number | null
+    grossTotal: number | null
+    netTotalDue: number | null
 }
 
 export interface InvoiceData {
-    invoiceNumber: string
-    invoiceDate: string
-    vendorName: string
-
-    pages: InvoicePage[]
-
-    subtotalPage1: number
-    subtotalpage2: number
-    subtotalPage3: number
-    grossTotal: number
-    discountPercent: number
-    discountAmount: number
-    deliveryFee: number
-    taxableAmount: number
-    stateSalesTax: number
-    netTotalDue: number
+    invoiceNumber: string | null
+    invoiceDate: string | null
+    vendorName: string | null
 
     lineItems: LineItem[]
+
+    totals: InvoiceTotals
 }
 
 export interface ValidationResult {

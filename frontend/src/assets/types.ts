@@ -1,31 +1,30 @@
-
-type LineItem = {
+export type LineItem = {
     description: string
-    quantity: number
-    unitPrice: number
-    lineTotal: number
+    quantity: number | null
+    unitPrice: number | null
+    lineTotal: number | null
 }
 
-type InvoicePage = {
-    pageNumber: number
-    pageSubtotal: number
+export type InvoiceTotals = {
+    subtotal: number | null
+    tax: number | null
+    discount: number | null
+    shipping: number | null
+    grossTotal: number | null
+    netTotalDue: number | null
+}
+
+export type InvoiceData = {
+    invoiceNumber: string | null
+    invoiceDate: string | null
+    vendorName: string | null
+
     lineItems: LineItem[]
+
+    totals: InvoiceTotals
 }
 
-export type Invoice = {
-    invoiceNumber: string
-    invoiceDate: string
-    vendorName: string
-    grossTotal: number
-    discountAmount: number
-    deliveryFee: number
-    taxableAmount: number
-    stateSalesTax: number
-    netTotalDue: number
-    pages: InvoicePage[]
-}
-
-export type Validation = {
+export type ValidationResult = {
     isDuplicate: boolean
     amountMismatch: boolean
     recalculationMismatch: boolean

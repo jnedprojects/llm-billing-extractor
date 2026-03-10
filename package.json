@@ -4,14 +4,15 @@
   "version": "1.0.0",
   "description": "Full-stack AI invoice extraction system",
   "license": "ISC",
-
   "scripts": {
     "dev": "concurrently -n BACKEND,FRONTEND -c blue,green \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\"",
     "dev:backend": "npm run dev --prefix backend",
     "dev:frontend": "npm run dev --prefix frontend"
   },
-
   "devDependencies": {
     "concurrently": "^9.2.1"
+  },
+  "dependencies": {
+    "jsonrepair": "^3.13.2"
   }
 }

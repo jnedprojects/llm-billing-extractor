@@ -1,93 +1,105 @@
 import { InvoiceData, ValidationResult } from "./models"
-import { isDuplicate, markAsProcessed } from "./database"
+import { isDuplicate, saveInvoice } from "./database"
 
 export function validateInvoice(invoice: InvoiceData): ValidationResult {
+
     const warnings: string[] = []
     const lineItemErrors: string[] = []
     const calculationErrors: string[] = []
 
-    // 1. Duplicate check
-    const duplicate = isDuplicate(invoice.invoiceNumber)
+    const duplicate = isDuplicate(invoice.invoiceNumber, invoice.vendorName)
+
     if (duplicate) {
-        warnings.push(`DUPLICATE DETECTED: Invoice #${invoice.invoiceNumber} has already been processed.`);
+        warnings.push(`DUPLICATE DETECTED: Invoice ${invoice.invoiceNumber} from ${invoice.vendorName} already exists.`)
     }
 
-    // 2. Hierarchical Page & Line Item Validation
-    let totalCalculatedFromPages = 0
+    // LINE ITEM VALIDATION
 
-    invoice.pages.forEach(page => {
-        let pageCalculatedSum = 0
+    let calculatedSubtotal = 0
 
-        page.lineItems.forEach(item => {
-            // Digit Check: Qty * Price = Total (catches 3 vs 5 errors)
-            const expectedLineTotal = Number((item.quantity * item.unitPrice).toFixed(2))
+    invoice.lineItems.forEach((item, index) => {
+
+        if (
+            item.quantity !== null &&
+            item.unitPrice !== null &&
+            item.lineTotal !== null
+        ) {
+
+            const expectedLineTotal =
+                Number((item.quantity * item.unitPrice).toFixed(2))
 
             if (Math.abs(expectedLineTotal - item.lineTotal) > 0.01) {
-                lineItemErrors.push(`${item.description} (Pg ${page.pageNumber})`)
-                warnings.push(`⚠️ Recalculation Error: ${item.description} (Pg ${page.pageNumber}). Extracted Unit Price: ${item.unitPrice}, Qty: ${item.quantity}, but Total: ${item.lineTotal}. Validated data suggests ${expectedLineTotal}.`);
-            }
-            pageCalculatedSum += item.lineTotal
-        })
 
-        // Cross-check: Do items on this page match the printed Page Subtotal?
-        if (Math.abs(pageCalculatedSum - page.pageSubtotal) > 0.01) {
-            calculationErrors.push(`pageSubtotal_pg${page.pageNumber}`)
-            warnings.push(`Page ${page.pageNumber} mismatch: Items sum to ${pageCalculatedSum.toFixed(2)}, but subtotal says ${page.pageSubtotal.toFixed(2)}`)
+                lineItemErrors.push(index.toString())
+
+                warnings.push(
+                    `Line item mismatch for "${item.description}". ` +
+                    `Expected ${expectedLineTotal} but found ${item.lineTotal}`
+                )
+            }
         }
-        totalCalculatedFromPages += page.pageSubtotal
+
+        if (item.lineTotal !== null) {
+            calculatedSubtotal += item.lineTotal
+        }
+
     })
 
-    // 3. Summary Validation
-    // Check if total of all pages equals the Gross Total
-    if (Math.abs(totalCalculatedFromPages - invoice.grossTotal) > 0.01) {
-        calculationErrors.push("grossTotal")
-        warnings.push("Gross total does not match the sum of page subtotals")
+    calculatedSubtotal = Number(calculatedSubtotal.toFixed(2))
+
+    // SUBTOTAL VALIDATION
+
+    const extractedSubtotal = invoice.totals?.subtotal
+
+    if (extractedSubtotal !== null && extractedSubtotal !== undefined) {
+
+        if (Math.abs(calculatedSubtotal - extractedSubtotal) > 0.01) {
+
+            calculationErrors.push("subtotal")
+
+            warnings.push(
+                `Subtotal mismatch. Line items sum to ${calculatedSubtotal} but subtotal shows ${extractedSubtotal}`
+            )
+        }
     }
 
-    // Discount (5%)
-    const expectedDiscount = Number((invoice.grossTotal * 0.05).toFixed(2))
-    if (Math.abs(expectedDiscount - invoice.discountAmount) > 0.01) {
-        calculationErrors.push("discountAmount")
-        warnings.push("Discount calculation incorrect")
+    // FINAL TOTAL VALIDATION
+
+    const subtotal = invoice.totals?.subtotal ?? calculatedSubtotal
+    const tax = invoice.totals?.tax ?? 0
+    const discount = invoice.totals?.discount ?? 0
+    const shipping = invoice.totals?.shipping ?? 0
+    const extractedNetTotal = invoice.totals?.netTotalDue
+
+    const expectedNetTotal =
+        Number((subtotal - discount + tax + shipping).toFixed(2))
+
+    let amountMismatch = false
+
+    if (extractedNetTotal !== null && extractedNetTotal !== undefined) {
+
+        if (Math.abs(expectedNetTotal - extractedNetTotal) > 0.01) {
+
+            amountMismatch = true
+
+            calculationErrors.push("netTotalDue")
+
+            warnings.push(
+                `Total mismatch. Expected ${expectedNetTotal} but found ${extractedNetTotal}`
+            )
+        }
     }
 
-    // Delivery Fee (Fixed 150)
-    if (Math.abs(invoice.deliveryFee - 150) > 0.01) {
-        calculationErrors.push("deliveryFee")
-        warnings.push("Delivery fee should be 150")
-    }
-
-    // Taxable Amount (Gross - Discount + Delivery)
-    const expectedTaxable = invoice.grossTotal - invoice.discountAmount + invoice.deliveryFee
-    if (Math.abs(expectedTaxable - invoice.taxableAmount) > 0.01) {
-        calculationErrors.push("taxableAmount")
-        warnings.push("Taxable amount incorrect")
-    }
-
-    // State Sales Tax (6%)
-    const expectedTax = Number((expectedTaxable * 0.06).toFixed(2))
-    if (Math.abs(expectedTax - invoice.stateSalesTax) > 0.01) {
-        calculationErrors.push("stateSalesTax")
-        warnings.push(`State sales tax incorrect (Expected 6%: ${expectedTax})`)
-    }
-
-    // Net Total Due (Taxable + Tax)
-    const expectedNet = Number((expectedTaxable + invoice.stateSalesTax).toFixed(2))
-    const amountMismatch = Math.abs(expectedNet - invoice.netTotalDue) > 0.01
-
-    if (amountMismatch) {
-        calculationErrors.push("netTotalDue")
-        warnings.push("Net total due calculation incorrect")
-    }
+    // SAVE TO DATABASE
 
     if (!duplicate && invoice.invoiceNumber) {
-        markAsProcessed(invoice.invoiceNumber);
+        saveInvoice(invoice)
     }
 
     return {
         isDuplicate: duplicate,
         amountMismatch,
-        recalculationMismatch: lineItemErrors.length > 0 || calculationErrors.length > 0,
+        recalculationMismatch: lineItemErrors.length > 0,
         warnings,
         lineItemErrors,
         calculationErrors
