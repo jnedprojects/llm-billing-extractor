@@ -78,6 +78,7 @@ function App() {
       <input
         type="file"
         multiple
+        accept="image/png, image/jpeg"
         onChange={(e) => setFiles(e.target.files)}
       />
 
@@ -131,11 +132,7 @@ function App() {
                 return (
                   <tr
                     key={idx}
-                    style={{
-                      backgroundColor: validation?.lineItemErrors.includes(idx.toString())
-                        ? "#ffd6d6"
-                        : "transparent"
-                    }}
+                    className={hasError ? "error-row" : "normal-row"}
                   >
                     <td>{item.description}</td>
 

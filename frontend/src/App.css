@@ -109,3 +109,12 @@ button:disabled {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
+
+.normal-row {
+  color: white;
+}
+
+.error-row {
+  background-color: #ffd6d6;
+  color: black;
+}
