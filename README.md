@@ -143,6 +143,8 @@ Frontend:
 http://localhost:5173 
 ```
 
+Once both the frontend and backend have built succesfully, you can navigate to the frontend URL and start using the extractor!
+
 ---
 
 ## API Usage
