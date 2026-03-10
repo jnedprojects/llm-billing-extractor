@@ -78,10 +78,11 @@ Clone the repository:
 git clone https://github.com/jnedprojects/llm-billing-extractor.git
 ```
 
+Open the folder titled llm-billing-extractor in your IDE.
 Navigate to the backend folder:
 
 ```bash
-cd billing-extractor/backend
+cd backend
 ```
 
 Install dependencies:
@@ -101,7 +102,7 @@ GEMINI_API_KEY=your_api_key_here
 Navigate to the frontend folder:
 
 ```bash
-cd billing-extractor/frontend
+cd ../frontend
 ```
 
 Install dependencies:
@@ -113,7 +114,7 @@ npm install
 Navigate back to the root folder:
 
 ```bash
-cd billing-extractor
+cd ..
 ```
 
 Install dependencies:
